@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Feather, Menu, X } from 'lucide-react';
@@ -7,7 +7,7 @@ import styles from './Header.module.css';
 import { useLanguage } from '../context/LanguageContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
-export default function Header() {
+function HeaderContent() {
     const { t } = useLanguage();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -81,5 +81,13 @@ export default function Header() {
                 </AnimatePresence>
             </div>
         </header>
+    );
+}
+
+export default function Header() {
+    return (
+        <Suspense fallback={<div style={{ height: 'var(--header-height)' }} />}>
+            <HeaderContent />
+        </Suspense>
     );
 }
