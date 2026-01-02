@@ -121,6 +121,12 @@
     /* Slight border for definition */
 }
 
+@media (max-width: 480px) {
+    .paper {
+        padding: 32px 16px;
+    }
+}
+
 /* Simulated Rice Paper Texture Overlay if needed, or CSS pattern */
 .paperTexture {
     position: absolute;
