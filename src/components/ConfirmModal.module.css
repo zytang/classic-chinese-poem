@@ -1,0 +1,86 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    pointer-events: auto;
+}
+
+.backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+}
+
+.modal {
+    background: var(--paper-white);
+    padding: 32px;
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    z-index: 2001;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: var(--ink-black);
+}
+
+.message {
+    font-size: 1rem;
+    color: var(--charcoal-gray);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.cancelBtn,
+.confirmBtn {
+    padding: 8px 24px;
+    border-radius: 2px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.cancelBtn {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    color: var(--charcoal-gray);
+}
+
+.cancelBtn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.confirmBtn {
+    background: var(--vermilion-red);
+    color: white;
+    border: 1px solid var(--vermilion-red);
+}
+
+.confirmBtn:hover {
+    background: #b92b1b;
+    /* darker shade */
+}
