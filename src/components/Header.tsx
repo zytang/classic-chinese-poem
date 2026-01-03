@@ -2,6 +2,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Feather, Menu, X } from 'lucide-react';
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import LanguageToggle from './LanguageToggle';
 import styles from './Header.module.css';
 import { useLanguage } from '../context/LanguageContext';
@@ -40,6 +41,16 @@ function HeaderContent() {
                         {t('gallery.my_works')}
                     </Link>
                     <LanguageToggle />
+                    <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
+                        <SignedOut>
+                            <SignInButton mode="modal">
+                                <button className={styles.link}>Sign In</button>
+                            </SignInButton>
+                        </SignedOut>
+                        <SignedIn>
+                            <UserButton />
+                        </SignedIn>
+                    </div>
                 </nav>
 
                 {/* Mobile Menu Toggle */}
@@ -75,6 +86,16 @@ function HeaderContent() {
                             </Link>
                             <div className={styles.mobileLang}>
                                 <LanguageToggle />
+                            </div>
+                            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
+                                <SignedOut>
+                                    <SignInButton mode="modal">
+                                        <button className={styles.mobileLink}>Sign In</button>
+                                    </SignInButton>
+                                </SignedOut>
+                                <SignedIn>
+                                    <UserButton />
+                                </SignedIn>
                             </div>
                         </motion.div>
                     )}

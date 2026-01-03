@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
+import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import Header from '../../components/Header';
@@ -290,21 +291,64 @@ const MASTERPIECES: Poem[] = [
 // Combine static and dynamic
 // Only manage dynamic poems here
 const usePoems = () => {
+    const { user, isSignedIn } = useUser();
     const [poems, setPoems] = useState<Poem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
+    // Effect to load poems depending on auth state
     useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
-        setPoems(saved);
-    }, []);
+        async function loadPoems() {
+            setIsLoading(true);
+            if (isSignedIn) {
+                // Fetch from Cloud
+                try {
+                    const res = await fetch('/api/poems/list');
+                    const data = await res.json();
+                    if (data.success) {
+                        // Map DB fields to Component fields if needed (case changes etc)
+                        // DB: imageUrl -> Component: image
+                        const mapped = data.poems.map((p: any) => ({
+                            ...p,
+                            image: p.imageUrl || p.image
+                        }));
+                        setPoems(mapped);
+                    }
+                } catch (err) {
+                    console.error("Failed to load cloud poems", err);
+                }
+            } else {
+                // Fetch from LocalStorage
+                const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+                setPoems(saved);
+            }
+            setIsLoading(false);
+        }
 
-    const deletePoem = (id: number) => {
-        const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
-        const updated = saved.filter((p: Poem) => p.id !== id);
-        localStorage.setItem('savedPoems', JSON.stringify(updated));
-        setPoems(updated);
+        loadPoems();
+    }, [isSignedIn]); // Reload when auth state changes
+
+    const deletePoem = async (id: number) => {
+        if (isSignedIn) {
+            // Delete from Cloud
+            try {
+                await fetch('/api/poems/delete', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ id })
+                });
+                setPoems(current => current.filter(p => p.id !== id));
+            } catch (e) {
+                console.error("Delete failed", e);
+            }
+        } else {
+            // Delete from LocalStorage
+            const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+            const updated = saved.filter((p: Poem) => p.id !== id);
+            localStorage.setItem('savedPoems', JSON.stringify(updated));
+            setPoems(updated);
+        }
     };
 
-    return { poems, deletePoem };
+    return { poems, deletePoem, isLoading };
 };
 
 // Extracted Card Component for cleaner render
@@ -361,8 +405,9 @@ const PoemCard = ({ poem, index, onDelete }: { poem: Poem; index: number; onDele
 
 function GalleryContent() {
     const { t } = useLanguage();
-    const { poems, deletePoem } = usePoems();
+    const { poems, deletePoem, isLoading } = usePoems();
     const { showToast } = useToast();
+    const { isSignedIn } = useUser();
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const searchParams = useSearchParams();
     const view = searchParams.get('view') || 'masterpieces'; // default to masterpieces

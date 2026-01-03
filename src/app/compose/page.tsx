@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Feather, RefreshCw, Copy, Bookmark, Palette, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useUser } from '@clerk/nextjs';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import styles from './page.module.css';
@@ -47,6 +48,10 @@ export default function ComposePage() {
 
 
 
+    const { user, isSignedIn } = useUser();
+
+    // ... (rest of code)
+
     const handleSave = async () => {
         if (!poem) return;
 
@@ -55,22 +60,45 @@ export default function ComposePage() {
 
             // If it's a generated base64 image, compress it
             if (generatedImage && generatedImage.startsWith('data:image')) {
-                showToast('Optimizing image for storage...', 'success');
+                showToast('Optimizing image...', 'success');
                 imageToSave = await compressImage(generatedImage);
             }
 
-            const savedPoems = JSON.parse(localStorage.getItem('savedPoems') || '[]');
-            const newPoem = {
-                id: Date.now(),
-                title: topic,
-                author: "User • AI",
-                content: poem.split('\n'),
-                style: style,
-                image: imageToSave
-            };
+            if (isSignedIn) {
+                // Cloud Save
+                showToast('Saving to cloud...', 'info');
+                const res = await fetch('/api/poems/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: topic,
+                        author: user?.fullName || "User",
+                        content: poem.split('\n'),
+                        style,
+                        image: imageToSave
+                    })
+                });
+                if (res.ok) {
+                    showToast(t('compose.msg.saved') + ' (Cloud)', 'success');
+                } else {
+                    throw new Error('Cloud save failed');
+                }
 
-            localStorage.setItem('savedPoems', JSON.stringify([...savedPoems, newPoem]));
-            showToast(t('compose.msg.saved'), 'success');
+            } else {
+                // Local Save (Fallback)
+                const savedPoems = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+                const newPoem = {
+                    id: Date.now(),
+                    title: topic,
+                    author: "User • AI",
+                    content: poem.split('\n'),
+                    style: style,
+                    image: imageToSave
+                };
+
+                localStorage.setItem('savedPoems', JSON.stringify([...savedPoems, newPoem]));
+                showToast(t('compose.msg.saved') + ' (Local)', 'success');
+            }
 
         } catch (e: any) {
             console.error("Save failed", e);
