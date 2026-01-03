@@ -22,7 +22,7 @@ export default function ComposePage() {
     const { showToast } = useToast();
     const [topic, setTopic] = useState('');
     const [style, setStyle] = useState('wujue');
-    const [mood, setMood] = useState('Nostalgic');
+    const [mood, setMood] = useState('Joyful');
     const [isGenerating, setIsGenerating] = useState(false);
     const [poem, setPoem] = useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
