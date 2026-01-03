@@ -6,12 +6,13 @@ import { auth } from '@clerk/nextjs/server';
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        let { userId } = await auth();
+        // Allow anonymous save if not signed in (for Community Sharing)
         if (!userId) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            userId = 'anonymous';
         }
 
-        const { title, author, content, style, image } = await req.json();
+        const { title, author, content, style, image, isPublic } = await req.json();
 
         let imageUrl = image;
         // Upload image to Blob if it's base64 data
@@ -42,7 +43,8 @@ export async function POST(req: NextRequest) {
             author,
             content: JSON.stringify(content), // Store as JSON string
             style,
-            imageUrl
+            imageUrl,
+            isPublic: isPublic || false
         }).returning();
 
         return NextResponse.json({ success: true, poem: result[0] });

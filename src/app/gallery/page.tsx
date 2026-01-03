@@ -7,7 +7,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Globe, Lock, Share2 } from 'lucide-react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import FadeIn from '../../components/FadeIn';
@@ -23,6 +23,7 @@ type Poem = {
     content: string[];
     style: string;
     image: string;
+    isPublic?: boolean;
 };
 
 const MASTERPIECES: Poem[] = [
@@ -290,46 +291,152 @@ const MASTERPIECES: Poem[] = [
 
 // Combine static and dynamic
 // Only manage dynamic poems here
+
+
 const usePoems = () => {
     const { user, isSignedIn } = useUser();
+    const { showToast } = useToast();
     const [poems, setPoems] = useState<Poem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const view = searchParams.get('view') || 'masterpieces';
 
-    // Effect to load poems depending on auth state
     useEffect(() => {
         async function loadPoems() {
             setIsLoading(true);
-            if (isSignedIn) {
-                // Fetch from Cloud
-                try {
-                    const res = await fetch('/api/poems/list');
+            try {
+                let url = '/api/poems/list';
+                if (view === 'community') {
+                    url += '?view=community';
+                }
+
+                if (isSignedIn || view === 'community') {
+                    const res = await fetch(url);
                     const data = await res.json();
                     if (data.success) {
-                        // Map DB fields to Component fields if needed (case changes etc)
-                        // DB: imageUrl -> Component: image
                         const mapped = data.poems.map((p: any) => ({
                             ...p,
-                            image: p.imageUrl || p.image
+                            image: p.imageUrl || p.image,
+                            isPublic: p.isPublic
                         }));
                         setPoems(mapped);
                     }
-                } catch (err) {
-                    console.error("Failed to load cloud poems", err);
+                } else if (view === 'my_works') {
+                    // LocalStorage fallback for my_works only
+                    const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+                    setPoems(saved);
                 }
-            } else {
-                // Fetch from LocalStorage
-                const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
-                setPoems(saved);
+            } catch (err) {
+                console.error("Failed to load poems", err);
             }
             setIsLoading(false);
         }
 
         loadPoems();
-    }, [isSignedIn]); // Reload when auth state changes
+    }, [isSignedIn, view]);
+
+    const togglePublic = async (id: number, currentStatus: boolean, poem: Poem) => {
+        // SCENARIO 1: Signed In User (Toggle Visibility)
+        if (isSignedIn) {
+            try {
+                const res = await fetch('/api/poems/share', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id, isPublic: !currentStatus })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    setPoems(current => current.map(p =>
+                        p.id === id ? { ...p, isPublic: !currentStatus } : p
+                    ));
+                    return !currentStatus;
+                }
+            } catch (e) {
+                console.error("Share failed", e);
+            }
+            return currentStatus;
+        }
+
+        // SCENARIO 2: Anonymous User (Upload or Delete)
+        else {
+            // Case A: Unshare -> Delete from Server
+            if (currentStatus) {
+                // Determine server ID
+                const serverId = (poem as any).serverId;
+
+                if (!serverId) {
+                    return currentStatus;
+                }
+
+                try {
+                    await fetch('/api/poems/delete', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ id: serverId })
+                    });
+
+                    // Update LocalStorage: remove serverId and set isPublic false
+                    const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+                    const updated = saved.map((p: any) =>
+                        p.id === id ? { ...p, isPublic: false, serverId: undefined } : p
+                    );
+                    localStorage.setItem('savedPoems', JSON.stringify(updated));
+
+                    // Update State
+                    setPoems(current => current.map(p =>
+                        p.id === id ? { ...p, isPublic: false, serverId: undefined } : p
+                    ));
+
+                    showToast('Poem Unshared (Deleted from Cloud)', 'info');
+                    return false;
+
+                } catch (e) {
+                    console.error("Anonymous unshare failed", e);
+                }
+            }
+
+            // Case B: Share -> Upload to Server
+            else {
+                try {
+                    showToast('Publishing to Community...', 'info');
+                    const res = await fetch('/api/poems/save', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            title: poem.title,
+                            author: poem.author,
+                            content: poem.content,
+                            style: poem.style,
+                            image: poem.image,
+                            isPublic: true
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        const serverId = data.poem.id;
+                        // Update LocalStorage: add serverId and set isPublic true
+                        const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
+                        const updated = saved.map((p: any) =>
+                            p.id === id ? { ...p, isPublic: true, serverId: serverId } : p
+                        );
+                        localStorage.setItem('savedPoems', JSON.stringify(updated));
+
+                        // Update State
+                        setPoems(current => current.map(p =>
+                            p.id === id ? { ...p, isPublic: true, serverId: serverId } : p
+                        ));
+                        showToast('Poem Shared to Community!', 'success');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("Anonymous share failed", e);
+                    showToast('Share failed', 'error');
+                }
+            }
+            return currentStatus;
+        }
+    };
 
     const deletePoem = async (id: number) => {
         if (isSignedIn) {
-            // Delete from Cloud
             try {
                 await fetch('/api/poems/delete', {
                     method: 'DELETE',
@@ -340,7 +447,6 @@ const usePoems = () => {
                 console.error("Delete failed", e);
             }
         } else {
-            // Delete from LocalStorage
             const saved = JSON.parse(localStorage.getItem('savedPoems') || '[]');
             const updated = saved.filter((p: Poem) => p.id !== id);
             localStorage.setItem('savedPoems', JSON.stringify(updated));
@@ -348,11 +454,11 @@ const usePoems = () => {
         }
     };
 
-    return { poems, deletePoem, isLoading };
+    return { poems, deletePoem, togglePublic, isLoading };
 };
 
 // Extracted Card Component for cleaner render
-const PoemCard = ({ poem, index, onDelete }: { poem: Poem; index: number; onDelete?: () => void }) => {
+const PoemCard = ({ poem, index, onDelete, onTogglePublic }: { poem: Poem; index: number; onDelete?: () => void, onTogglePublic?: () => void }) => {
     return (
         <FadeIn delay={index * 0.1}>
             <motion.div
@@ -371,17 +477,32 @@ const PoemCard = ({ poem, index, onDelete }: { poem: Poem; index: number; onDele
                 <span className={styles.tag}>{poem.style}</span>
 
                 {onDelete && (
-                    <button
-                        className={styles.deleteBtn}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        title="Remove"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    <div className={styles.cardActions}>
+                        {onTogglePublic && (
+                            <button
+                                className={styles.iconBtn}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    onTogglePublic();
+                                }}
+                                title={poem.isPublic ? "Public (Click to hide)" : "Private (Click to share)"}
+                            >
+                                {poem.isPublic ? <Globe size={18} color="var(--jade-green)" /> : <Lock size={18} />}
+                            </button>
+                        )}
+                        <button
+                            className={styles.deleteBtn}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            title="Remove"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
                 )}
 
                 <div className={styles.cardContent}>
@@ -405,7 +526,7 @@ const PoemCard = ({ poem, index, onDelete }: { poem: Poem; index: number; onDele
 
 function GalleryContent() {
     const { t } = useLanguage();
-    const { poems, deletePoem, isLoading } = usePoems();
+    const { poems, deletePoem, togglePublic, isLoading } = usePoems();
     const { showToast } = useToast();
     const { isSignedIn } = useUser();
     const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -432,12 +553,14 @@ function GalleryContent() {
                     <FadeIn>
                         <header className={styles.pageHeader}>
                             <h1 className={styles.title}>
-                                {view === 'masterpieces' ? t('gallery.masterpieces') : t('gallery.my_works')}
+                                {view === 'masterpieces' && t('gallery.masterpieces')}
+                                {view === 'my_works' && t('gallery.my_works')}
+                                {view === 'community' && t('gallery.community')}
                             </h1>
                             <p className={styles.subtitle}>
-                                {view === 'masterpieces'
-                                    ? "Curated Masterpieces from the Tang Dynasty"
-                                    : "Your Personal Anthology of AI-Assisted Poetry"}
+                                {view === 'masterpieces' && t('gallery.masterpieces.subtitle')}
+                                {view === 'my_works' && t('gallery.my_works.subtitle')}
+                                {view === 'community' && t('gallery.community.subtitle')}
                             </p>
                         </header>
                     </FadeIn>
@@ -462,6 +585,7 @@ function GalleryContent() {
                                             poem={poem}
                                             index={index}
                                             onDelete={() => checkDelete(poem.id)}
+                                            onTogglePublic={() => togglePublic(poem.id, !!poem.isPublic, poem)}
                                         />
                                     ))}
                                 </div>
@@ -474,6 +598,15 @@ function GalleryContent() {
                                 </div>
                             )}
                         </>
+                    )}
+
+                    {/* Section 3: Community */}
+                    {view === 'community' && (
+                        <div className={styles.galleryGrid}>
+                            {poems.map((poem, index) => (
+                                <PoemCard key={poem.id} poem={poem} index={index} />
+                            ))}
+                        </div>
                     )}
                 </div>
             </main>

@@ -40,11 +40,14 @@ function HeaderContent() {
                     <Link href="/gallery?view=my_works" className={`${styles.link} ${searchParams.get('view') === 'my_works' ? styles.active : ''}`}>
                         {t('gallery.my_works')}
                     </Link>
+                    <Link href="/gallery?view=community" className={`${styles.link} ${searchParams.get('view') === 'community' ? styles.active : ''}`}>
+                        {t('nav.community')}
+                    </Link>
                     <LanguageToggle />
                     <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
                         <SignedOut>
                             <SignInButton mode="modal">
-                                <button className={styles.link}>Sign In</button>
+                                <button className={styles.link}>{t('nav.sign_in')}</button>
                             </SignInButton>
                         </SignedOut>
                         <SignedIn>
@@ -84,13 +87,16 @@ function HeaderContent() {
                             <Link href="/gallery?view=my_works" className={styles.mobileLink} onClick={closeMobileMenu}>
                                 {t('gallery.my_works')}
                             </Link>
+                            <Link href="/gallery?view=community" className={styles.mobileLink} onClick={closeMobileMenu}>
+                                {t('nav.community')}
+                            </Link>
                             <div className={styles.mobileLang}>
                                 <LanguageToggle />
                             </div>
                             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
                                 <SignedOut>
                                     <SignInButton mode="modal">
-                                        <button className={styles.mobileLink}>Sign In</button>
+                                        <button className={styles.mobileLink}>{t('nav.sign_in')}</button>
                                     </SignInButton>
                                 </SignedOut>
                                 <SignedIn>

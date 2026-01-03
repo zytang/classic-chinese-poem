@@ -37,7 +37,13 @@ export const translations = {
         'compose.msg.delete_confirm': 'Are you sure you want to remove this poem from your collection? This action cannot be undone.',
         'compose.msg.illustrated': 'New illustration created!',
         'gallery.masterpieces': 'Tang Masterpieces',
+        'gallery.masterpieces.subtitle': 'Curated Masterpieces from the Tang Dynasty',
         'gallery.my_works': 'My Creation',
+        'gallery.my_works.subtitle': 'Your Personal Anthology of AI-Assisted Poetry',
+        'gallery.community': 'Community 🌏',
+        'gallery.community.subtitle': 'Discover Creations from Fellow Poets',
+        'nav.community': 'Community 🌏',
+        'nav.sign_in': 'Sign In',
         'footer.text': '© 2026 Master of Chinese Regulated Poetry Generation. Designed with Ink & Code.',
 
         // Learn Section
@@ -118,7 +124,13 @@ export const translations = {
         'compose.msg.delete_confirm': '您确定要从收藏中删除这首诗吗？此操作无法撤销。',
         'compose.msg.illustrated': '已为您绘制新画作！',
         'gallery.masterpieces': '传世经典',
+        'gallery.masterpieces.subtitle': '精选唐代诗词名篇',
         'gallery.my_works': '我的佳作',
+        'gallery.my_works.subtitle': '您的个人AI诗词创作集',
+        'gallery.community': '诗词雅集 🌏',
+        'gallery.community.subtitle': '欣赏来自五湖四海的诗友佳作',
+        'nav.community': '诗词雅集 🌏',
+        'nav.sign_in': '登录',
         'footer.text': '© 2026 中文格律诗生成大师. 墨与码的交响.',
 
         // Learn Section

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, json, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, json, varchar, boolean } from 'drizzle-orm/pg-core';
 
 export const poems = pgTable('poems', {
     id: serial('id').primaryKey(),
@@ -8,6 +8,7 @@ export const poems = pgTable('poems', {
     content: json('content').notNull(), // Array of strings stored as JSON
     style: varchar('style', { length: 50 }).notNull(),
     imageUrl: text('image_url'),
+    isPublic: boolean('is_public').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
