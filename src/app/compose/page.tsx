@@ -318,10 +318,10 @@ export default function ComposePage() {
                                             <div className={styles.poemActions}>
                                                 <button
                                                     className="btn btn-secondary"
-                                                    title={t('compose.btn.save')}
-                                                    onClick={() => handleSave()}
+                                                    title={t('compose.btn.regenerate')}
+                                                    onClick={handleCompose}
                                                 >
-                                                    <Bookmark size={16} />
+                                                    <RefreshCw size={16} />
                                                 </button>
 
                                                 {/* Manual Illustrate Button */}
@@ -340,10 +340,10 @@ export default function ComposePage() {
 
                                                 <button
                                                     className="btn btn-secondary"
-                                                    title={t('compose.btn.regenerate')}
-                                                    onClick={handleCompose}
+                                                    title={t('compose.btn.save')}
+                                                    onClick={() => handleSave()}
                                                 >
-                                                    <RefreshCw size={16} />
+                                                    <Bookmark size={16} />
                                                 </button>
                                             </div>
                                         </motion.div>

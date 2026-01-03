@@ -1,18 +1,20 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Feather, Menu, X } from 'lucide-react';
+import { Feather, Menu, X, HelpCircle } from 'lucide-react';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import LanguageToggle from './LanguageToggle';
 import styles from './Header.module.css';
 import { useLanguage } from '../context/LanguageContext';
 import { AnimatePresence, motion } from 'framer-motion';
+import UserGuideModal from './UserGuideModal';
 
 function HeaderContent() {
     const { t } = useLanguage();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isGuideOpen, setIsGuideOpen] = useState(false);
 
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -44,6 +46,16 @@ function HeaderContent() {
                         {t('nav.community')}
                     </Link>
                     <LanguageToggle />
+
+                    <button
+                        className={styles.link}
+                        onClick={() => setIsGuideOpen(true)}
+                        title={t('nav.guide')}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    >
+                        <HelpCircle size={20} />
+                    </button>
+
                     <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
                         <SignedOut>
                             <SignInButton mode="modal">
@@ -90,6 +102,15 @@ function HeaderContent() {
                             <Link href="/gallery?view=community" className={styles.mobileLink} onClick={closeMobileMenu}>
                                 {t('nav.community')}
                             </Link>
+
+                            <button
+                                className={styles.mobileLink}
+                                onClick={() => { setIsGuideOpen(true); closeMobileMenu(); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', justifyContent: 'center' }}
+                            >
+                                {t('nav.guide')}
+                            </button>
+
                             <div className={styles.mobileLang}>
                                 <LanguageToggle />
                             </div>
@@ -107,6 +128,8 @@ function HeaderContent() {
                     )}
                 </AnimatePresence>
             </div>
+
+            <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
         </header>
     );
 }

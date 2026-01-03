@@ -20,13 +20,16 @@
     border-radius: 8px;
     width: 100%;
     max-width: 900px;
-    height: 85vh;
+    max-height: 80vh;
+    /* Reduced to ensure it fits on smaller screens */
     display: flex;
     flex-direction: column;
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(0, 0, 0, 0.05);
     overflow: hidden;
+    margin: auto;
+    /* Center in the flex container */
 }
 
 .closeBtn {
@@ -276,7 +279,8 @@
 @media (max-width: 768px) {
     .modal {
         width: 95%;
-        height: 90vh;
+        max-height: 85vh;
+        /* Ensure mobile also uses max-height, not fixed height */
     }
 
     .content {
